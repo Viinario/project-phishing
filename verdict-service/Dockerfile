@@ -1,16 +1,5 @@
-FROM python:3.9-slim
-
-# Set the working directory
+FROM python:3.13-slim
 WORKDIR /app
-
-# Copy the requirements file
-COPY requirements.txt .
-
-# Install the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the application code
-COPY app.py .
-
-# Command to run the application
-CMD ["python", "app.py"]
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]

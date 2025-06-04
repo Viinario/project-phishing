@@ -1,17 +1,20 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route('/detect', methods=['POST'])
-def detect_phishing():
-    data = request.json
-    # Implement phishing detection logic here
-    # For example, analyze the provided data and return a verdict
-    result = {
-        'status': 'success',
-        'message': 'Phishing detection logic not implemented yet.'
+class TextInput(BaseModel):
+    text: str
+
+@app.post("/detect")
+def detect_phishing(data: TextInput):
+    # Simula a resposta de um LLM
+    if "bloqueio" in data.text.lower():
+        return {
+            "risk": "high",
+            "explanation": "Palavras de urgência detectadas."
+        }
+    return {
+        "risk": "low",
+        "explanation": "Sem indicação de phishing."
     }
-    return jsonify(result)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)

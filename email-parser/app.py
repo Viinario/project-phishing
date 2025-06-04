@@ -1,32 +1,21 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
+import re
+from typing import List
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route('/parse-email', methods=['POST'])
-def parse_email():
-    data = request.get_json()
-    email_content = data.get('email_content', '')
+class EmailInput(BaseModel):
+    subject: str
+    body: str
+    from_address: str
 
-    # Placeholder for email parsing logic
-    parsed_data = {
-        'subject': extract_subject(email_content),
-        'sender': extract_sender(email_content),
-        'body': extract_body(email_content)
+@app.post("/parse")
+def parse_email(data: EmailInput):
+    links = re.findall(r"https?://\S+", data.body)
+    text = re.sub(r"https?://\S+", "", data.body)
+    return {
+        "sender": data.from_address,
+        "links": links,
+        "text": text.strip()
     }
-
-    return jsonify(parsed_data)
-
-def extract_subject(email_content):
-    # Logic to extract subject from email content
-    return "Extracted Subject"
-
-def extract_sender(email_content):
-    # Logic to extract sender from email content
-    return "Extracted Sender"
-
-def extract_body(email_content):
-    # Logic to extract body from email content
-    return "Extracted Body"
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
