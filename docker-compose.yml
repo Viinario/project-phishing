@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  email-parser:
+    build:
+      context: ./email-parser
+      dockerfile: Dockerfile
+    volumes:
+      - ./email-parser:/app
+    networks:
+      - phishing-net
+
+  phishing-detector:
+    build:
+      context: ./phishing-detector
+      dockerfile: Dockerfile
+    volumes:
+      - ./phishing-detector:/app
+    networks:
+      - phishing-net
+
+  link-analyzer:
+    build:
+      context: ./link-analyzer
+      dockerfile: Dockerfile
+    volumes:
+      - ./link-analyzer:/app
+    networks:
+      - phishing-net
+
+  verdict-service:
+    build:
+      context: ./verdict-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./verdict-service:/app
+    networks:
+      - phishing-net
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    volumes:
+      - ./gateway:/app
+    networks:
+      - phishing-net
+
+networks:
+  phishing-net:
+    driver: bridge
