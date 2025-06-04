@@ -45,6 +45,8 @@ services:
       - ./gateway:/app
     networks:
       - phishing-net
+    ports:
+      - "5000:5000"
 
 networks:
   phishing-net:
