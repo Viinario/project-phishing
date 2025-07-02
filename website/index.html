@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detector</title>
+
+    <link rel="stylesheet" href="./assets/css/style.css">
+
+    <!--Fonts-->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="./assets/images/logo-site.svg"
+      type="image/x-icon"
+      sizes="15x15"
+    />
+</head>
+<body>
+    <header>
+        <img id="title-header" src="./assets/images/title-header.svg" alt="Imagem representando a logo do site">
+    </header>
+    
+    <main>
+        <div class="content">
+            <div class="content-left">
+                <div class="content-left-title">
+                    <h1>Você <span id="nao">não</span> tem<br></h1>
+                    <h1 id="certeza">certeza?</h1>
+                </div>
+                <p>Recebeu um e-mail estranho e ficou na dúvida? Envie o arquivo e a gente te ajuda a descobrir se é golpe ou não — simples, rápido e sem complicação.</p>
+            </div>
+            <div class="upload-box">
+                <img id="image-phishing" src="assets/images/phishing-image.svg" alt="Imagem para representar o phishing"/>
+                <p>Selecione um arquivo PDF ou TXT para análise</p>
+                <form id="uploadForm">
+                    <input type="file" name="file" accept=".pdf,.txt"><br>
+                    <button type="submit" class="btn">Analisar Arquivo</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+    &copy; 2025 Phishing detector — Projeto da disciplina de Implementação de sistemas distribuídos
+    </footer>
+</body>
+</html>
