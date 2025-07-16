@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./email-parser:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     networks:
       - phishing-net
     ports:
@@ -44,6 +46,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./verdict-service:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     networks:
       - phishing-net
     ports:

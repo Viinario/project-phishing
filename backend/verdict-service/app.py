@@ -1,7 +1,24 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import re
+import os
+import google.generativeai as genai
+import json
+import logging
+
+# Configuração de logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Configuração da API do Gemini
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    logger.error("GEMINI_API_KEY não encontrada! Defina a variável de ambiente.")
+    raise ValueError("GEMINI_API_KEY é obrigatória")
+
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-pro')
 
 app = FastAPI()
 
@@ -11,142 +28,153 @@ class AnalysisResult(BaseModel):
     sender: str
     subject: str
 
-@app.get("/")
-def health_check():
-    return {"status": "healthy", "service": "verdict-service"}
+def analyze_complete_case_with_ai(analysis_data: AnalysisResult) -> Dict[str, Any]:
+    """Usa IA para analisar todos os dados e gerar um veredito holístico"""
+    try:
+        prompt = f"""
+        Você é um especialista em detecção de phishing. Analise TODOS os dados abaixo e forneça um veredito final.
+        
+        ANÁLISE DO EMAIL:
+        {json.dumps(analysis_data.email_analysis, indent=2, ensure_ascii=False)}
+        
+        ANÁLISE DOS LINKS:
+        {json.dumps(analysis_data.link_analysis, indent=2, ensure_ascii=False)}
+        
+        REMETENTE: {analysis_data.sender}
+        ASSUNTO: {analysis_data.subject}
+        
+        Por favor, analise HOLÍSTICAMENTE todos esses dados e retorne um JSON com:
+        
+        1. "phishing_score": score de 0-100 (onde 100 = phishing certo)
+        2. "risk_level": "CRÍTICO" | "ALTO" | "MÉDIO" | "BAIXO"
+        3. "is_phishing": true/false
+        4. "confidence": "high" | "medium" | "low"
+        5. "recommendation": "Recomendação clara para o usuário"
+        6. "action": "block" | "review" | "allow"
+        7. "detailed_analysis": {{
+            "correlation_analysis": "Como diferentes indicadores se correlacionam",
+            "pattern_recognition": "Padrões de phishing identificados",
+            "context_evaluation": "Avaliação do contexto geral",
+            "final_reasoning": "Justificativa final do veredito"
+        }}
+        8. "risk_factors": [lista de fatores de risco encontrados]
+        9. "confidence_factors": [fatores que aumentam a confiança no veredito]
+        
+        IMPORTANTE: Considere a CORRELAÇÃO entre diferentes análises. Por exemplo:
+        - Se email E links são suspeitos = score muito alto
+        - Se só um é suspeito = investigar contradições
+        - Se remetente legítimo mas conteúdo suspeito = possível conta comprometida
+        
+        Responda APENAS com JSON válido, sem explicações adicionais.
+        """
+        
+        response = model.generate_content(prompt)
+        result = json.loads(response.text)
+        
+        return {
+            "ai_verdict_successful": True,
+            "verdict": result
+        }
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Erro ao decodificar resposta da IA: {e}")
+        return {
+            "ai_verdict_successful": False,
+            "error": "Erro ao processar resposta da IA",
+            "fallback_verdict": generate_fallback_verdict(analysis_data)
+        }
+    except Exception as e:
+        logger.error(f"Erro na análise com IA: {e}")
+        return {
+            "ai_verdict_successful": False,
+            "error": str(e),
+            "fallback_verdict": generate_fallback_verdict(analysis_data)
+        }
 
-@app.post("/verdict")
-def generate_final_verdict(data: AnalysisResult):
-    """Gera o veredito final baseado nas análises dos microsserviços"""
-    
-    # Pontuação base
+def generate_fallback_verdict(data: AnalysisResult) -> Dict[str, Any]:
+    """Gera veredito de fallback usando lógica tradicional quando IA falha"""
     total_score = 0
     risk_factors = []
     
-    # Análise do conteúdo do email (peso: 50%)
+    # Análise do email (peso: 50%)
     email_result = data.email_analysis
     if email_result.get('is_phishing', False):
         total_score += 50
-        risk_factors.append("Conteúdo identificado como phishing pela IA")
+        risk_factors.append("Conteúdo identificado como phishing")
     elif email_result.get('risk_level') == 'high':
         total_score += 40
         risk_factors.append("Alto risco detectado no conteúdo")
-    elif email_result.get('risk_level') == 'medium':
-        total_score += 20
-        risk_factors.append("Risco médio detectado no conteúdo")
     
     # Análise dos links (peso: 30%)
     link_result = data.link_analysis
-    link_risk_score = link_result.get('overall_risk_score', 0)
+    link_score = link_result.get('overall_risk_score', 0)
+    total_score += (link_score * 0.3)
     
-    if link_risk_score >= 60:
-        total_score += 30
-        risk_factors.append("Links altamente suspeitos detectados")
-    elif link_risk_score >= 30:
-        total_score += 15
-        risk_factors.append("Links com risco médio detectados")
-    
-    if link_result.get('suspicious_count', 0) > 0:
-        risk_factors.append(f"{link_result['suspicious_count']} link(s) suspeito(s)")
-    
-    # Análise do remetente (peso: 20%)
-    sender = data.sender.lower()
-    sender_score = analyze_sender(sender)
-    total_score += sender_score
-    
-    if sender_score > 0:
-        risk_factors.append("Remetente suspeito")
-    
-    # Análise do assunto (peso adicional)
-    subject_score = analyze_subject(data.subject)
-    total_score += subject_score
-    
-    if subject_score > 0:
-        risk_factors.append("Assunto com características suspeitas")
+    if link_score >= 60:
+        risk_factors.append("Links altamente suspeitos")
     
     # Determina o nível de risco
     if total_score >= 70:
         risk_level = "CRÍTICO"
-        recommendation = "BLOQUEAR IMEDIATAMENTE - Alta probabilidade de phishing"
         action = "block"
     elif total_score >= 50:
         risk_level = "ALTO"
-        recommendation = "BLOQUEAR - Provável phishing"
         action = "block"
     elif total_score >= 30:
-        risk_level = "MÉDIO" 
-        recommendation = "REVISAR - Características suspeitas detectadas"
+        risk_level = "MÉDIO"
         action = "review"
     else:
         risk_level = "BAIXO"
-        recommendation = "PERMITIR - Email parece legítimo"
         action = "allow"
     
     return {
         "phishing_score": min(total_score, 100),
         "risk_level": risk_level,
         "is_phishing": total_score >= 50,
-        "confidence": "high" if total_score >= 70 or total_score <= 20 else "medium",
-        "recommendation": recommendation,
+        "confidence": "medium",
+        "recommendation": f"Veredito automático: {risk_level}",
         "action": action,
         "risk_factors": risk_factors,
-        "analysis_details": {
-            "email_analysis": email_result,
-            "link_analysis": link_result,
-            "sender_score": sender_score,
-            "subject_score": subject_score
-        }
+        "method": "fallback_logic"
     }
 
-def analyze_sender(sender: str) -> int:
-    """Analisa o remetente em busca de indicadores suspeitos"""
-    score = 0
-    
-    # Domínios suspeitos comuns
-    suspicious_domains = [
-        'tempmail', 'guerrillamail', '10minutemail', 'mailinator',
-        'throwaway', 'fake', 'temp', 'disposable'
-    ]
-    
-    if any(domain in sender for domain in suspicious_domains):
-        score += 15
-    
-    # Verifica caracteres suspeitos
-    if re.search(r'[0-9]{3,}', sender):
-        score += 10  # Muitos números
-    
-    # Verifica domínios que imitam serviços conhecidos
-    fake_domains = [
-        'gmai1.com', 'yah00.com', 'hotmai1.com', 'goog1e.com',
-        'microsooft.com', 'app1e.com'
-    ]
-    
-    if any(fake in sender for fake in fake_domains):
-        score += 20
-    
-    return score
+@app.get("/")
+def health_check():
+    return {"status": "healthy", "service": "verdict-service", "ai_enabled": GEMINI_API_KEY is not None}
 
-def analyze_subject(subject: str) -> int:
-    """Analisa o assunto em busca de características de phishing"""
-    score = 0
-    subject_lower = subject.lower()
-    
-    # Palavras de urgência
-    urgent_words = [
-        'urgente', 'imediato', 'agora', 'hoje', 'expire', 'vence',
-        'bloqueio', 'suspensa', 'cancelar', 'verificar'
-    ]
-    
-    urgent_count = sum(1 for word in urgent_words if word in subject_lower)
-    score += urgent_count * 5
-    
-    # Uso excessivo de maiúsculas
-    if len(re.findall(r'[A-Z]', subject)) > len(subject) * 0.5:
-        score += 10
-    
-    # Múltiplos pontos de exclamação
-    exclamation_count = subject.count('!')
-    if exclamation_count >= 2:
-        score += exclamation_count * 3
-    
-    return min(score, 20)  # Máximo 20 pontos do assunto
+@app.post("/verdict")
+def generate_final_verdict(data: AnalysisResult):
+    """Gera o veredito final usando IA para análise holística"""
+    try:
+        # Análise principal com IA
+        ai_result = analyze_complete_case_with_ai(data)
+        
+        if ai_result["ai_verdict_successful"]:
+            verdict = ai_result["verdict"]
+            verdict["analysis_method"] = "ai_holistic"
+            verdict["ai_analysis_successful"] = True
+            return verdict
+        else:
+            # Fallback para lógica tradicional
+            fallback_verdict = ai_result["fallback_verdict"]
+            fallback_verdict["analysis_method"] = "fallback_logic"
+            fallback_verdict["ai_analysis_successful"] = False
+            fallback_verdict["ai_error"] = ai_result.get("error", "Erro desconhecido")
+            return fallback_verdict
+            
+    except Exception as e:
+        logger.error(f"Erro crítico no verdict service: {e}")
+        # Último recurso - veredito de emergência
+        return {
+            "phishing_score": 50,
+            "risk_level": "MÉDIO",
+            "is_phishing": False,
+            "confidence": "low",
+            "recommendation": "REVISAR MANUALMENTE - Erro no sistema de análise",
+            "action": "review",
+            "risk_factors": ["Sistema de análise indisponível"],
+            "analysis_method": "emergency_fallback",
+            "ai_analysis_successful": False,
+            "error": str(e)
+        }
+
