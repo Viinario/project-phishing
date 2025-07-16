@@ -9,6 +9,8 @@ services:
       - ./email-parser:/app
     networks:
       - phishing-net
+    ports:
+      - "5001:5000"
 
   phishing-detector:
     build:
@@ -16,8 +18,12 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./phishing-detector:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     networks:
       - phishing-net
+    ports:
+      - "5002:5000"
 
   link-analyzer:
     build:
@@ -27,6 +33,8 @@ services:
       - ./link-analyzer:/app
     networks:
       - phishing-net
+    ports:
+      - "5003:5000"
 
   verdict-service:
     build:
@@ -36,6 +44,8 @@ services:
       - ./verdict-service:/app
     networks:
       - phishing-net
+    ports:
+      - "5004:5000"
 
   gateway:
     build:
@@ -47,6 +57,11 @@ services:
       - phishing-net
     ports:
       - "5000:5000"
+    depends_on:
+      - email-parser
+      - phishing-detector
+      - link-analyzer
+      - verdict-service
 
 networks:
   phishing-net:
