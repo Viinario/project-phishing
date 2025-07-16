@@ -88,16 +88,26 @@
 
           // Verificar se arquivo foi selecionado
           if (!fileInput.files[0]) {
-            alert("Por favor, selecione um arquivo EML.");
+            result.innerHTML = `
+                    <div class="result-error">
+                        <h3>❌ Nenhum arquivo selecionado</h3>
+                        <p>Por favor, selecione um arquivo EML.</p>
+                    </div>
+                `;
+            result.style.display = "block";
             return;
           }
 
           // Verificar se é realmente um arquivo .eml
           const fileName = fileInput.files[0].name;
           if (!fileName.toLowerCase().endsWith(".eml")) {
-            alert(
-              "Por favor, selecione apenas arquivos .eml (arquivo de e-mail)."
-            );
+            result.innerHTML = `
+                    <div class="result-error">
+                        <h3>❌ Formato de arquivo inválido</h3>
+                        <p>Por favor, selecione apenas arquivos .eml (arquivo de e-mail).</p>
+                    </div>
+                `;
+            result.style.display = "block";
             return;
           }
 
@@ -168,12 +178,28 @@
         .getElementById("fileInput")
         .addEventListener("change", function (e) {
           const uploadText = document.getElementById("upload-text");
+          const analyzeBtn = document.getElementById("analyzeBtn");
           const fileName = e.target.files[0]?.name;
 
           if (fileName) {
-            uploadText.textContent = `Arquivo selecionado: ${fileName}`;
+            // Truncar nome do arquivo se for muito longo
+            let displayName = fileName;
+            if (fileName.length > 30) {
+              const extension = fileName.substring(fileName.lastIndexOf("."));
+              const nameWithoutExt = fileName.substring(
+                0,
+                fileName.lastIndexOf(".")
+              );
+              const truncatedName =
+                nameWithoutExt.substring(0, 25) + "..." + extension;
+              displayName = truncatedName;
+            }
+
+            uploadText.textContent = `Arquivo selecionado: ${displayName}`;
+            analyzeBtn.classList.add("show"); // Mostra o botão
           } else {
             uploadText.textContent = "Selecione um arquivo EML para análise";
+            analyzeBtn.classList.remove("show"); // Esconde o botão
           }
         });
     </script>
