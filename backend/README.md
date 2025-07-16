@@ -116,7 +116,7 @@ Verifica o status de todos os microsserviços.
 - `POST /detect` - Análise simples por palavras-chave
 
 ### Link Analyzer (Porta 5003)
-- `POST /analyze` - Analisa lista de URLs
+- `POST /analyze` - Análise de URLs usando exclusivamente IA
 
 ### Verdict Service (Porta 5004)
 - `POST /verdict` - Gera veredito final combinado
@@ -142,7 +142,11 @@ curl -X POST "http://localhost:5000/analyze" \
 ### Script de Teste Automatizado
 
 ```bash
+# Teste geral do sistema
 python test_services.py
+
+# Teste específico do Link Analyzer com IA
+python test_link_comparison.py
 ```
 
 ## 🛡️ Funcionalidades de Detecção
@@ -152,11 +156,11 @@ python test_services.py
 - Detecta linguagem de urgência e ameaças
 - Identifica táticas comuns de phishing
 
-### Análise de Links
-- Detecta URLs encurtadas suspeitas
-- Identifica domínios falsos (typosquatting)
-- Verifica uso de IPs ao invés de domínios
-- Analisa estrutura de subdomínios
+### Análise de Links (100% IA)
+- **Análise Exclusiva com IA**: Usa Google Gemini para detectar todos os tipos de links suspeitos
+- **Detecção Contextual**: Identifica padrões complexos que regras tradicionais não capturam
+- **Análise Semântica**: Entende o contexto e intenção por trás dos domínios
+- **Adaptação Contínua**: Beneficia-se do conhecimento atualizado do modelo de IA
 
 ### Análise de Remetente
 - Detecta domínios temporários

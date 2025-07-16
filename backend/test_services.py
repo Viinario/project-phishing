@@ -167,19 +167,71 @@ def test_individual_services():
         print(f"❌ Email Parser: {e}")
     
     # Teste do link-analyzer
-    print("\n2. Testando Link Analyzer...")
-    links_data = {"links": ["https://bit.ly/suspicious", "https://192.168.1.1/malware"]}
+    print("\n2. Testando Link Analyzer (IA apenas)...")
+    links_data = {"links": [
+        "https://goog1e-security.com/verify", 
+        "https://192.168.1.1/malware",
+        "https://bit.ly/suspicious",
+        "https://www.google.com"  # Link legítimo para comparação
+    ]}
     
     try:
-        response = requests.post(f"{BASE_URLS['link-analyzer']}/analyze", json=links_data)
+        response = requests.post(f"{BASE_URLS['link-analyzer']}/analyze", json=links_data, timeout=45)
         if response.status_code == 200:
             print("✅ Link Analyzer: OK")
             link_result = response.json()
             print(f"   🔗 Links suspeitos: {link_result.get('suspicious_count', 0)}")
+            print(f"   🤖 Método: {link_result.get('method', 'N/A')}")
+            print(f"   📊 Score: {link_result.get('overall_risk_score', 0)}")
+            print(f"   🎯 Confiança: {link_result.get('confidence', 'N/A')}")
         else:
             print(f"❌ Link Analyzer: Erro {response.status_code}")
+    except requests.exceptions.Timeout:
+        print("⏰ Link Analyzer: Timeout (isso pode ser normal para análise com IA)")
     except Exception as e:
         print(f"❌ Link Analyzer: {e}")
+
+def test_link_analyzer_ai():
+    """Testa especificamente a funcionalidade de IA no link analyzer"""
+    print("\n🔗 Testando Link Analyzer com IA...")
+    
+    # Links especificamente suspeitos para testar a IA
+    test_links = {
+        "links": [
+            "https://goog1e-security.com/urgent-verification",
+            "https://amaz0n-support.net/account-suspended", 
+            "https://bit.ly/3malicious",
+            "https://www.google.com",  # Link legítimo
+            "https://www.github.com"  # Outro link legítimo
+        ]
+    }
+    
+    try:
+        # Teste da análise com IA
+        response = requests.post(f"{BASE_URLS['link-analyzer']}/analyze", json=test_links, timeout=60)
+        
+        if response.status_code == 200:
+            result = response.json()
+            ai_info = result.get('ai_analysis', {})
+            
+            print("✅ Análise com IA realizada!")
+            print(f"   🎯 Score final: {result.get('overall_risk_score', 'N/A')}")
+            print(f"   ⚠️ Nível de risco: {result.get('risk_level', 'N/A')}")
+            print(f"   🔍 Método: {result.get('method', 'N/A')}")
+            print(f"   🤖 URLs suspeitas detectadas: {result.get('suspicious_count', 0)}")
+            print(f"   � Recomendação: {result.get('recommendation', 'N/A')}")
+            
+            return True
+        else:
+            print(f"❌ Erro na análise: {response.status_code}")
+            return False
+            
+    except requests.exceptions.Timeout:
+        print("⏰ Timeout na análise (isso pode ser normal para muitos links)")
+        return False
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        return False
     
     # Teste do phishing-detector (modo simples)
     print("\n3. Testando Phishing Detector (modo simples)...")
@@ -216,7 +268,14 @@ def main():
     # 4. Testa serviços individuais
     test_individual_services()
     
-    # 5. Testa análise completa (só se Gemini estiver OK)
+    # 5. Testa Link Analyzer com IA
+    if gemini_ok:
+        link_ai_ok = test_link_analyzer_ai()
+    else:
+        link_ai_ok = False
+        print("\n⚠️ Pulando teste de Link Analyzer com IA (Gemini não está funcionando)")
+    
+    # 6. Testa análise completa (só se Gemini estiver OK)
     if gemini_ok:
         test_email_analysis()
     else:
@@ -224,8 +283,12 @@ def main():
     
     print("\n✨ Testes concluídos!")
     
-    if gemini_ok:
+    if gemini_ok and link_ai_ok:
         print("🎉 Todos os sistemas estão funcionando perfeitamente!")
+        print("🤖 IA ativada em: Phishing Detector + Link Analyzer")
+    elif gemini_ok:
+        print("🎉 Sistemas principais funcionando!")
+        print("⚠️ Verifique a configuração da IA no Link Analyzer")
     else:
         print("⚠️ Sistema funcional, mas verifique a configuração da API do Gemini")
 
