@@ -1,11 +1,13 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: Roboto, sans-serif;
 }
 
 body {
-  font-family: Arial, sans-serif;
   background: radial-gradient(circle 590px, #4b4b58 0%, #23232c 70%);
   color: #333;
 }
@@ -17,7 +19,7 @@ header {
   padding: 10px 40px 10px 40px;
   text-align: center;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 #title-header {
@@ -32,7 +34,7 @@ header p {
 
 #title-header {
   font-size: 2rem;
-  text-align: left;;
+  text-align: left;
 }
 
 .content {
@@ -47,10 +49,10 @@ header p {
 }
 .content h1 {
   font-size: 4rem;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 900;
   letter-spacing: -1px; /* diminui o espaço entre letras */
-  color:#fff
+  color: #fff;
 }
 .content-left {
   display: grid;
@@ -74,7 +76,7 @@ header p {
 }
 
 #image-phishing {
-  width: 200px; 
+  width: 200px;
   height: auto;
 }
 
@@ -91,7 +93,7 @@ header p {
   align-items: center;
   text-align: center;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .upload-box img {
@@ -101,6 +103,64 @@ header p {
 
 .upload-box input[type="file"] {
   margin-top: 10px;
+}
+
+/* Estilos para resultados da análise */
+#result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.result-safe {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.result-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.result-error {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Botão desabilitado */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animação de loading */
+#btn-loading {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Estilo para input file */
+input[type="file"] {
+  margin-bottom: 15px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
 }
 
 .btn {
