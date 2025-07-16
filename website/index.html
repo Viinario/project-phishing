@@ -124,7 +124,7 @@
 
           try {
             // Enviar arquivo para o backend
-            const response = await fetch("/api/analyze", {
+            const response = await fetch("/analyze-eml", {
               method: "POST",
               body: formData,
             });
@@ -133,26 +133,47 @@
 
             if (response.ok) {
               // Mostrar resultado da análise
+              const verdict = data.verdict;
               result.innerHTML = `
                         <div class="result-${
-                          data.isPhishing ? "danger" : "safe"
+                          verdict.is_phishing ? "danger" : "safe"
                         }">
                             <h3>${
-                              data.isPhishing
+                              verdict.is_phishing
                                 ? "⚠️ Possível Phishing Detectado!"
                                 : "✅ Arquivo Seguro"
                             }</h3>
-                            <p>${data.message}</p>
+                            <p><strong>Nível de Risco:</strong> ${
+                              verdict.risk_level
+                            }</p>
+                            <p><strong>Recomendação:</strong> ${
+                              verdict.recommendation
+                            }</p>
                             ${
-                              data.confidence
-                                ? `<p>Confiança: ${data.confidence}%</p>`
+                              verdict.phishing_score
+                                ? `<p><strong>Score de Phishing:</strong> ${verdict.phishing_score}/100</p>`
                                 : ""
                             }
+                            ${
+                              verdict.confidence
+                                ? `<p><strong>Confiança:</strong> ${verdict.confidence}</p>`
+                                : ""
+                            }
+                            <hr style="margin: 10px 0;">
+                            <p><strong>Remetente:</strong> ${
+                              data.email_data.sender
+                            }</p>
+                            <p><strong>Assunto:</strong> ${
+                              data.email_data.subject
+                            }</p>
+                            <p><strong>Links encontrados:</strong> ${
+                              data.email_data.links_count
+                            }</p>
                         </div>
                     `;
               uploadText.textContent = "Análise concluída!";
             } else {
-              throw new Error(data.error || "Erro ao analisar arquivo");
+              throw new Error(data.detail || "Erro ao analisar arquivo");
             }
           } catch (error) {
             console.error("Erro:", error);
