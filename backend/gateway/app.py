@@ -33,11 +33,11 @@ async def analyze_eml_file(file: UploadFile = File(...)):
         
         link_analysis = link_response.json()
         
-        # 3. Análise do conteúdo com IA
+        # 3. Análise de phishing do email
         phishing_payload = {
             "subject": email_data.get("subject", ""),
-            "body": email_data.get("text_content", ""),
-            "sender": email_data.get("sender", "")
+            "body": email_data.get("body", ""),
+            "from_address": email_data.get("from_address", "")
         }
         
         phishing_response = requests.post('http://phishing-detector:5000/analyze', 
@@ -52,7 +52,7 @@ async def analyze_eml_file(file: UploadFile = File(...)):
         verdict_payload = {
             "email_analysis": phishing_analysis,
             "link_analysis": link_analysis,
-            "sender": email_data.get("sender", ""),
+            "from_address": email_data.get("from_address", ""),
             "subject": email_data.get("subject", "")
         }
         
@@ -69,9 +69,9 @@ async def analyze_eml_file(file: UploadFile = File(...)):
             "status": "success",
             "email_data": {
                 "subject": email_data.get("subject"),
-                "sender": email_data.get("sender"),
+                "from_address": email_data.get("from_address"),
                 "links_count": len(email_data.get("links", [])),
-                "text_preview": email_data.get("text_content", "")[:200] + "..." if len(email_data.get("text_content", "")) > 200 else email_data.get("text_content", "")
+                "body_preview": email_data.get("body", "")[:200] + "..." if len(email_data.get("body", "")) > 200 else email_data.get("body", "")
             },
             "analysis_results": {
                 "phishing_analysis": phishing_analysis,
@@ -114,29 +114,26 @@ def analyze_email_data(data: EmailInput):
         
         link_result = link_response.json()
 
-        # 3. Análise do conteúdo
+        # 3. Análise de phishing
         phishing_payload = {
             "subject": data.subject,
-            "body": email_result.get("text_content", ""),
-            "sender": email_result.get("sender", "")
+            "body": data.body,
+            "from_address": data.from_address
         }
         
         phishing_response = requests.post('http://phishing-detector:5000/analyze', 
                                         json=phishing_payload)
         
         if phishing_response.status_code != 200:
-            # Fallback para o endpoint simples
-            simple_response = requests.post('http://phishing-detector:5000/detect', 
-                                          json={"text": email_result.get("text_content", "")})
-            phishing_analysis = simple_response.json() if simple_response.status_code == 200 else {"risk": "unknown"}
-        else:
-            phishing_analysis = phishing_response.json()
+            raise HTTPException(status_code=500, detail="Erro na análise de phishing")
+        
+        phishing_analysis = phishing_response.json()
 
         # 4. Veredito final
         verdict_payload = {
             "email_analysis": phishing_analysis,
             "link_analysis": link_result,
-            "sender": email_result.get("sender", ""),
+            "from_address": data.from_address,
             "subject": data.subject
         }
         

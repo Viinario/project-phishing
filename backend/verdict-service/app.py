@@ -3,33 +3,35 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import re
 import os
-import google.generativeai as genai
 import json
 import logging
+import requests
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Configuração da API do Gemini
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-if not GEMINI_API_KEY:
-    logger.error("GEMINI_API_KEY não encontrada! Defina a variável de ambiente.")
-    raise ValueError("GEMINI_API_KEY é obrigatória")
-
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-pro')
 
 app = FastAPI()
 
 class AnalysisResult(BaseModel):
     email_analysis: dict
     link_analysis: dict
-    sender: str
+    from_address: str
     subject: str
 
 def analyze_complete_case_with_ai(analysis_data: AnalysisResult) -> Dict[str, Any]:
     """Usa IA para analisar todos os dados e gerar um veredito holístico"""
+    
+    # Verifica se a API key está configurada
+    api_key = os.getenv('GEMINI_API_KEY')
+    if not api_key or api_key == 'cole_sua_chave_api_do_gemini_aqui':
+        logger.error("GEMINI_API_KEY não configurada")
+        return {
+            "ai_verdict_successful": False,
+            "error": "GEMINI_API_KEY não configurada",
+            "fallback_verdict": generate_fallback_verdict(analysis_data)
+        }
+    
     try:
         prompt = f"""
         Você é um especialista em detecção de phishing. Analise TODOS os dados abaixo e forneça um veredito final.
@@ -40,47 +42,176 @@ def analyze_complete_case_with_ai(analysis_data: AnalysisResult) -> Dict[str, An
         ANÁLISE DOS LINKS:
         {json.dumps(analysis_data.link_analysis, indent=2, ensure_ascii=False)}
         
-        REMETENTE: {analysis_data.sender}
+        REMETENTE: {analysis_data.from_address}
         ASSUNTO: {analysis_data.subject}
         
-        Por favor, analise HOLÍSTICAMENTE todos esses dados e retorne um JSON com:
+        FORMATO DE RESPOSTA OBRIGATÓRIO:
         
-        1. "phishing_score": score de 0-100 (onde 100 = phishing certo)
-        2. "risk_level": "CRÍTICO" | "ALTO" | "MÉDIO" | "BAIXO"
-        3. "is_phishing": true/false
-        4. "confidence": "high" | "medium" | "low"
-        5. "recommendation": "Recomendação clara para o usuário"
-        6. "action": "block" | "review" | "allow"
-        7. "detailed_analysis": {{
-            "correlation_analysis": "Como diferentes indicadores se correlacionam",
-            "pattern_recognition": "Padrões de phishing identificados",
-            "context_evaluation": "Avaliação do contexto geral",
-            "final_reasoning": "Justificativa final do veredito"
-        }}
-        8. "risk_factors": [lista de fatores de risco encontrados]
-        9. "confidence_factors": [fatores que aumentam a confiança no veredito]
+        PHISHING_SCORE: [Score de 0-100, onde 100 = phishing certo]
         
-        IMPORTANTE: Considere a CORRELAÇÃO entre diferentes análises. Por exemplo:
-        - Se email E links são suspeitos = score muito alto
-        - Se só um é suspeito = investigar contradições
-        - Se remetente legítimo mas conteúdo suspeito = possível conta comprometida
+        RISK_LEVEL: [CRÍTICO | ALTO | MÉDIO | BAIXO]
         
-        Responda APENAS com JSON válido, sem explicações adicionais.
+        IS_PHISHING: [true | false]
+        
+        CONFIDENCE: [high | medium | low]
+        
+        RECOMMENDATION: [Recomendação clara para o usuário]
+        
+        ACTION: [block | review | allow]
+        
+        CORRELATION_ANALYSIS: [Como diferentes indicadores se correlacionam]
+        
+        PATTERN_RECOGNITION: [Padrões de phishing identificados]
+        
+        CONTEXT_EVALUATION: [Avaliação do contexto geral]
+        
+        FINAL_REASONING: [Justificativa final do veredito]
+        
+        RISK_FACTORS:
+        - [Fator de risco 1]
+        - [Fator de risco 2]
+        - [Fator de risco 3]
+        
+        CONFIDENCE_FACTORS:
+        - [Fator de confiança 1]
+        - [Fator de confiança 2]
+        
+        IMPORTANTE: Considere a CORRELAÇÃO entre diferentes análises.
         """
         
-        response = model.generate_content(prompt)
-        result = json.loads(response.text)
-        
-        return {
-            "ai_verdict_successful": True,
-            "verdict": result
+        # Headers para a API
+        headers = {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': api_key
         }
         
-    except json.JSONDecodeError as e:
-        logger.error(f"Erro ao decodificar resposta da IA: {e}")
+        # Payload para a API
+        payload = {
+            "contents": [{
+                "parts": [{
+                    "text": prompt
+                }]
+            }],
+            "generationConfig": {
+                "temperature": 0.1,
+                "topK": 40,
+                "topP": 0.95,
+                "maxOutputTokens": 8192,
+            }
+        }
+        
+        timeout = 30
+        
+        logger.info("Gerando veredito com Gemini AI")
+        
+        response = requests.post(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+            headers=headers,
+            json=payload,
+            timeout=timeout
+        )
+        
+        if response.status_code != 200:
+            logger.error(f"Erro na API do Gemini: {response.status_code}")
+            return {
+                "ai_verdict_successful": False,
+                "error": f"Erro na API do Gemini: {response.status_code}",
+                "fallback_verdict": generate_fallback_verdict(analysis_data)
+            }
+        
+        result = response.json()
+        
+        if 'candidates' in result and len(result['candidates']) > 0:
+            ai_response = result['candidates'][0]['content']['parts'][0]['text']
+            logger.info(f"Resposta do Gemini recebida: {ai_response[:200]}...")
+            
+            # Primeiro tenta parsing JSON
+            try:
+                result_json = json.loads(ai_response)
+                return {
+                    "ai_verdict_successful": True,
+                    "verdict": result_json
+                }
+            except json.JSONDecodeError:
+                # Se JSON falhar, faz parsing manual da resposta estruturada
+                logger.info("JSON parsing falhou, usando parsing manual")
+                
+                # Parsing manual da resposta estruturada
+                verdict = {}
+                
+                # Extrai valores principais
+                score_match = re.search(r'PHISHING_SCORE:\s*(\d+)', ai_response)
+                verdict["phishing_score"] = int(score_match.group(1)) if score_match else 50
+                
+                risk_match = re.search(r'RISK_LEVEL:\s*(\w+)', ai_response)
+                verdict["risk_level"] = risk_match.group(1).upper() if risk_match else "MÉDIO"
+                
+                phishing_match = re.search(r'IS_PHISHING:\s*(true|false)', ai_response, re.IGNORECASE)
+                verdict["is_phishing"] = phishing_match.group(1).lower() == 'true' if phishing_match else False
+                
+                confidence_match = re.search(r'CONFIDENCE:\s*(\w+)', ai_response)
+                verdict["confidence"] = confidence_match.group(1).lower() if confidence_match else "medium"
+                
+                recommendation_match = re.search(r'RECOMMENDATION:\s*(.+?)(?=\n\n|\nACTION:|$)', ai_response, re.DOTALL)
+                verdict["recommendation"] = recommendation_match.group(1).strip() if recommendation_match else "Revisar manualmente"
+                
+                action_match = re.search(r'ACTION:\s*(\w+)', ai_response)
+                verdict["action"] = action_match.group(1).lower() if action_match else "review"
+                
+                # Análise detalhada
+                correlation_match = re.search(r'CORRELATION_ANALYSIS:\s*(.+?)(?=\n\n|\nPATTERN_RECOGNITION:|$)', ai_response, re.DOTALL)
+                pattern_match = re.search(r'PATTERN_RECOGNITION:\s*(.+?)(?=\n\n|\nCONTEXT_EVALUATION:|$)', ai_response, re.DOTALL)
+                context_match = re.search(r'CONTEXT_EVALUATION:\s*(.+?)(?=\n\n|\nFINAL_REASONING:|$)', ai_response, re.DOTALL)
+                reasoning_match = re.search(r'FINAL_REASONING:\s*(.+?)(?=\n\n|\nRISK_FACTORS:|$)', ai_response, re.DOTALL)
+                
+                verdict["detailed_analysis"] = {
+                    "correlation_analysis": correlation_match.group(1).strip() if correlation_match else "Análise não disponível",
+                    "pattern_recognition": pattern_match.group(1).strip() if pattern_match else "Padrões não identificados",
+                    "context_evaluation": context_match.group(1).strip() if context_match else "Contexto não avaliado",
+                    "final_reasoning": reasoning_match.group(1).strip() if reasoning_match else "Justificativa não disponível"
+                }
+                
+                # Extrai fatores de risco
+                risk_factors_section = re.search(r'RISK_FACTORS:\s*(.+?)(?=\n\n|\nCONFIDENCE_FACTORS:|$)', ai_response, re.DOTALL)
+                if risk_factors_section:
+                    risk_factors = re.findall(r'-\s*(.+)', risk_factors_section.group(1))
+                    verdict["risk_factors"] = [factor.strip() for factor in risk_factors]
+                else:
+                    verdict["risk_factors"] = []
+                
+                # Extrai fatores de confiança
+                confidence_factors_section = re.search(r'CONFIDENCE_FACTORS:\s*(.+?)(?=\n\n|$)', ai_response, re.DOTALL)
+                if confidence_factors_section:
+                    confidence_factors = re.findall(r'-\s*(.+)', confidence_factors_section.group(1))
+                    verdict["confidence_factors"] = [factor.strip() for factor in confidence_factors]
+                else:
+                    verdict["confidence_factors"] = []
+                
+                return {
+                    "ai_verdict_successful": True,
+                    "verdict": verdict,
+                    "parsing_method": "manual"
+                }
+        else:
+            logger.error("Resposta inválida da API do Gemini")
+            return {
+                "ai_verdict_successful": False,
+                "error": "Resposta inválida da API do Gemini",
+                "fallback_verdict": generate_fallback_verdict(analysis_data)
+            }
+            
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout na API do Gemini após {timeout}s")
         return {
             "ai_verdict_successful": False,
-            "error": "Erro ao processar resposta da IA",
+            "error": f"Timeout na API do Gemini após {timeout}s",
+            "fallback_verdict": generate_fallback_verdict(analysis_data)
+        }
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Erro de conexão com API do Gemini: {str(e)}")
+        return {
+            "ai_verdict_successful": False,
+            "error": f"Erro ao conectar com a API do Gemini: {str(e)}",
             "fallback_verdict": generate_fallback_verdict(analysis_data)
         }
     except Exception as e:
@@ -140,7 +271,8 @@ def generate_fallback_verdict(data: AnalysisResult) -> Dict[str, Any]:
 
 @app.get("/")
 def health_check():
-    return {"status": "healthy", "service": "verdict-service", "ai_enabled": GEMINI_API_KEY is not None}
+    api_key = os.getenv('GEMINI_API_KEY')
+    return {"status": "healthy", "service": "verdict-service", "ai_enabled": api_key is not None and api_key != 'cole_sua_chave_api_do_gemini_aqui'}
 
 @app.post("/verdict")
 def generate_final_verdict(data: AnalysisResult):
