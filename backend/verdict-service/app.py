@@ -127,7 +127,62 @@ def analyze_complete_case_with_ai(analysis_data: AnalysisResult) -> Dict[str, An
             
             # Primeiro tenta parsing JSON
             try:
-                result_json = json.loads(ai_response)
+                # Remove blocos de código markdown se existirem
+                clean_response = ai_response.strip()
+                if clean_response.startswith('```json'):
+                    clean_response = clean_response[7:]  # Remove ```json
+                if clean_response.startswith('```'):
+                    clean_response = clean_response[3:]  # Remove ```
+                if clean_response.endswith('```'):
+                    clean_response = clean_response[:-3]  # Remove ```
+                
+                clean_response = clean_response.strip()
+                
+                result_json = json.loads(clean_response)
+                
+                # Padronizar campos se necessário
+                if "PHISHING_SCORE" in result_json:
+                    result_json["phishing_score"] = result_json.pop("PHISHING_SCORE")
+                if "RISK_LEVEL" in result_json:
+                    result_json["risk_level"] = result_json.pop("RISK_LEVEL")
+                if "IS_PHISHING" in result_json:
+                    result_json["is_phishing"] = result_json.pop("IS_PHISHING")
+                if "CONFIDENCE" in result_json:
+                    result_json["confidence"] = result_json.pop("CONFIDENCE").lower()
+                if "RECOMMENDATION" in result_json:
+                    result_json["recommendation"] = result_json.pop("RECOMMENDATION")
+                if "ACTION" in result_json:
+                    result_json["action"] = result_json.pop("ACTION").lower()
+                
+                # Estruturar detailed_analysis se campos existirem
+                detailed_analysis = {}
+                if "CORRELATION_ANALYSIS" in result_json:
+                    detailed_analysis["correlation_analysis"] = result_json.pop("CORRELATION_ANALYSIS")
+                if "PATTERN_RECOGNITION" in result_json:
+                    detailed_analysis["pattern_recognition"] = result_json.pop("PATTERN_RECOGNITION")
+                if "CONTEXT_EVALUATION" in result_json:
+                    detailed_analysis["context_evaluation"] = result_json.pop("CONTEXT_EVALUATION")
+                if "FINAL_REASONING" in result_json:
+                    detailed_analysis["final_reasoning"] = result_json.pop("FINAL_REASONING")
+                
+                if detailed_analysis:
+                    result_json["detailed_analysis"] = detailed_analysis
+                
+                # Extrair listas de fatores
+                if "RISK_FACTORS" in result_json:
+                    risk_factors = result_json.pop("RISK_FACTORS")
+                    if isinstance(risk_factors, list):
+                        result_json["risk_factors"] = risk_factors
+                    else:
+                        result_json["risk_factors"] = []
+                
+                if "CONFIDENCE_FACTORS" in result_json:
+                    confidence_factors = result_json.pop("CONFIDENCE_FACTORS")
+                    if isinstance(confidence_factors, list):
+                        result_json["confidence_factors"] = confidence_factors
+                    else:
+                        result_json["confidence_factors"] = []
+                
                 return {
                     "ai_verdict_successful": True,
                     "verdict": result_json
