@@ -5,3 +5,4 @@ __pycache__/
 *.sqlite
 node_modules/
 .DS_Store
+test_simple.eml
