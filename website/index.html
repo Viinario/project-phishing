@@ -124,7 +124,7 @@
 
           try {
             // Enviar arquivo para o backend
-            const response = await fetch("/analyze-eml", {
+            const response = await fetch("http://localhost:5000/analyze-eml", {
               method: "POST",
               body: formData,
             });
