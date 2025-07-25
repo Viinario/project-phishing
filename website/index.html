@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Phishing Detector</title>
 
-    <link rel="stylesheet" href="./assets/css/style.css" />
+    <link rel="stylesheet" href="./assets/css/style2.css" />
 
     <!--Fonts-->
     <link
@@ -32,40 +32,41 @@
 
     <main>
       <div class="content">
-        <div class="content-left">
-          <div class="content-left-title">
-            <h1>Você <span id="nao">não</span> tem<br /></h1>
-            <h1 id="certeza">certeza?</h1>
-          </div>
-          <p>
-            Recebeu um e-mail estranho e ficou na dúvida? Envie o arquivo e a
+        <div class="content-title">
+          <h1 id="main-title">Você <span>não</span> tem certeza?</h1>
+          <h2>Recebeu um e-mail estranho e ficou na dúvida? Envie o arquivo e a
             gente te ajuda a descobrir se é golpe ou não — simples, rápido e sem
-            complicação.
-          </p>
+            complicação.</h2>
         </div>
         <div class="upload-box">
+          <div class="upload-box-info">
+            <form id="uploadForm">
+            <input
+            type="file"
+            name="file"
+            accept=".eml"
+            id="fileInput"
+            required
+            hidden
+            />
+
+            <label for="fileInput" class="custom-file-btn">
+              Selecionar arquivo EML
+            </label>
+            <p id="upload-text">Selecione um arquivo EML para análise</p>
+            <button type="submit" class="btn" id="analyzeBtn">
+              <span id="btn-text">Analisar Arquivo</span>
+              <span id="btn-loading" style="display: none">Analisando...</span>
+            </button>
+          </div>
           <img
             id="image-phishing"
             src="assets/images/phishing-image.svg"
             alt="Imagem para representar o phishing"
           />
-          <p id="upload-text">Selecione um arquivo EML para análise</p>
-          <form id="uploadForm">
-            <input
-              type="file"
-              name="file"
-              accept=".eml"
-              id="fileInput"
-              required
-            /><br />
-            <button type="submit" class="btn" id="analyzeBtn">
-              <span id="btn-text">Analisar Arquivo</span>
-              <span id="btn-loading" style="display: none">Analisando...</span>
-            </button>
           </form>
           <div id="result" style="display: none"></div>
         </div>
-      </div>
     </main>
 
     <footer>
