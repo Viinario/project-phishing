@@ -2,7 +2,7 @@
 
 ## 📁 Estrutura do Projeto
 
-Agora todos os serviços estão dockerizados e podem ser executados com um único comando:
+Todos os serviços estão dockerizados e podem ser executados com um único comando:
 
 - **Website** (Frontend): HTML/CSS/JavaScript servido via nginx
 - **Gateway** (API Principal): Coordena todos os outros serviços  
