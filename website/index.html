@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Phishing Detector</title>
 
-    <link rel="stylesheet" href="./assets/css/style2.css" />
+    <link rel="stylesheet" href="./assets/css/style.css" />
 
     <!--Fonts-->
     <link
@@ -65,7 +65,6 @@
             alt="Imagem para representar o phishing"
           />
           </form>
-          <div id="result" style="display: none"></div>
         </div>
     </main>
 
@@ -74,156 +73,7 @@
       sistemas distribuídos
     </footer>
 
-    <script>
-      document
-        .getElementById("uploadForm")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-
-          const fileInput = document.getElementById("fileInput");
-          const analyzeBtn = document.getElementById("analyzeBtn");
-          const btnText = document.getElementById("btn-text");
-          const btnLoading = document.getElementById("btn-loading");
-          const result = document.getElementById("result");
-          const uploadText = document.getElementById("upload-text");
-
-          // Verificar se arquivo foi selecionado
-          if (!fileInput.files[0]) {
-            result.innerHTML = `
-                    <div class="result-error">
-                        <h3>❌ Nenhum arquivo selecionado</h3>
-                        <p>Por favor, selecione um arquivo EML.</p>
-                    </div>
-                `;
-            result.style.display = "block";
-            return;
-          }
-
-          // Verificar se é realmente um arquivo .eml
-          const fileName = fileInput.files[0].name;
-          if (!fileName.toLowerCase().endsWith(".eml")) {
-            result.innerHTML = `
-                    <div class="result-error">
-                        <h3>❌ Formato de arquivo inválido</h3>
-                        <p>Por favor, selecione apenas arquivos .eml (arquivo de e-mail).</p>
-                    </div>
-                `;
-            result.style.display = "block";
-            return;
-          }
-
-          // Criar FormData para enviar arquivo
-          const formData = new FormData();
-          formData.append("file", fileInput.files[0]);
-
-          // Atualizar UI para estado de loading
-          analyzeBtn.disabled = true;
-          btnText.style.display = "none";
-          btnLoading.style.display = "inline";
-          uploadText.textContent = "Analisando arquivo...";
-          result.style.display = "none";
-
-          try {
-            // Enviar arquivo para o backend
-            const response = await fetch("http://localhost:5000/analyze-eml", {
-              method: "POST",
-              body: formData,
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-              // Mostrar resultado da análise
-              const verdict = data.verdict;
-              result.innerHTML = `
-                        <div class="result-${
-                          verdict.is_phishing ? "danger" : "safe"
-                        }">
-                            <h3>${
-                              verdict.is_phishing
-                                ? "⚠️ Possível Phishing Detectado!"
-                                : "✅ Arquivo Seguro"
-                            }</h3>
-                            <p><strong>Nível de Risco:</strong> ${
-                              verdict.risk_level
-                            }</p>
-                            <p><strong>Recomendação:</strong> ${
-                              verdict.recommendation
-                            }</p>
-                            ${
-                              verdict.phishing_score
-                                ? `<p><strong>Score de Phishing:</strong> ${verdict.phishing_score}/100</p>`
-                                : ""
-                            }
-                            ${
-                              verdict.confidence
-                                ? `<p><strong>Confiança:</strong> ${verdict.confidence}</p>`
-                                : ""
-                            }
-                            <hr style="margin: 10px 0;">
-                            <p><strong>Remetente:</strong> ${
-                              data.email_data.sender
-                            }</p>
-                            <p><strong>Assunto:</strong> ${
-                              data.email_data.subject
-                            }</p>
-                            <p><strong>Links encontrados:</strong> ${
-                              data.email_data.links_count
-                            }</p>
-                        </div>
-                    `;
-              uploadText.textContent = "Análise concluída!";
-            } else {
-              throw new Error(data.detail || "Erro ao analisar arquivo");
-            }
-          } catch (error) {
-            console.error("Erro:", error);
-            result.innerHTML = `
-                    <div class="result-error">
-                        <h3>❌ Erro na Análise</h3>
-                        <p>${error.message}</p>
-                    </div>
-                `;
-            uploadText.textContent =
-              "Erro ao analisar arquivo. Tente novamente.";
-          } finally {
-            // Restaurar estado do botão
-            analyzeBtn.disabled = false;
-            btnText.style.display = "inline";
-            btnLoading.style.display = "none";
-            result.style.display = "block";
-          }
-        });
-
-      // Atualizar texto quando arquivo for selecionado
-      document
-        .getElementById("fileInput")
-        .addEventListener("change", function (e) {
-          const uploadText = document.getElementById("upload-text");
-          const analyzeBtn = document.getElementById("analyzeBtn");
-          const fileName = e.target.files[0]?.name;
-
-          if (fileName) {
-            // Truncar nome do arquivo se for muito longo
-            let displayName = fileName;
-            if (fileName.length > 30) {
-              const extension = fileName.substring(fileName.lastIndexOf("."));
-              const nameWithoutExt = fileName.substring(
-                0,
-                fileName.lastIndexOf(".")
-              );
-              const truncatedName =
-                nameWithoutExt.substring(0, 25) + "..." + extension;
-              displayName = truncatedName;
-            }
-
-            uploadText.textContent = `Arquivo selecionado: ${displayName}`;
-            analyzeBtn.classList.add("show"); // Mostra o botão
-          } else {
-            uploadText.textContent = "Selecione um arquivo EML para análise";
-            analyzeBtn.classList.remove("show"); // Esconde o botão
-          }
-        });
-    </script>
+    <!-- Script externo para melhor organização -->
+    <script src="./assets/js/index.js"></script>
   </body>
 </html>

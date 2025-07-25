@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resultado da Análise - Phishing Detector</title>
+
+    <!-- CSS Principal do projeto -->
+    <link rel="stylesheet" href="./assets/css/style.css" />
+
+    <!-- Fontes do Google -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="./assets/images/logo-site.svg"
+      type="image/x-icon"
+      sizes="15x15"
+    />
+  </head>
+  <body>
+    <!-- Header com logo do site -->
+    <header>
+      <img
+        id="title-header"
+        src="./assets/images/title-header.svg"
+        alt="Imagem representando a logo do site"
+      />
+    </header>
+
+    <!-- Conteúdo principal da página -->
+    <main>
+      <div class="content">
+        <!-- Título da página de resultado -->
+        <div class="content-title">
+          <h1 id="main-title">Resultado da <span>Análise</span></h1>
+          <h2>Aqui está o resultado da análise do seu arquivo de e-mail.</h2>
+        </div>
+
+        <!-- Container para exibir resultados -->
+        <div class="result-container">
+          <!-- Indicador de carregamento -->
+          <div id="loading" class="loading-indicator">
+            <p>🔍 Analisando arquivo...</p>
+            <div class="loading-spinner"></div>
+          </div>
+
+          <!-- Container para resultado da análise -->
+          <div id="result" class="analysis-result" style="display: none"></div>
+
+          <!-- Botões de ação -->
+          <div class="action-buttons">
+            <button onclick="goBackToHome()" class="btn btn-secondary">
+              ← Voltar para Análise
+            </button>
+            <button
+              onclick="analyzeAnother()"
+              class="btn"
+              style="display: none"
+              id="analyzeAnotherBtn"
+            >
+              Analisar Outro Arquivo
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      &copy; 2025 Phishing detector — Projeto da disciplina de Implementação de
+      sistemas distribuídos
+    </footer>
+
+    <!-- Script específico para página de resultado -->
+    <script src="./assets/js/resposta.js"></script>
+  </body>
+</html>
