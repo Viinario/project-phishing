@@ -22,7 +22,7 @@ docker-compose up --build
 
 ### 2. Acessar os serviços
 
-- 🌐 **Website**: http://projeto-sd-phishing-detector.localhost
+- 🌐 **Website**: http://phishing-detector.localhost
 - 🔗 **API Gateway**: http://localhost:5000
 - 📧 **Email Parser**: http://localhost:5001
 - 🛡️ **Phishing Detector**: http://localhost:5002
@@ -59,7 +59,7 @@ docker-compose up --build website
 
 ## 🌐 Como Funciona
 
-1. O usuário acessa o website em http://projeto-sd-phishing-detector.localhost
+1. O usuário acessa o website em http://phishing-detector.localhost
 2. Faz upload de um arquivo .eml através da interface
 3. O JavaScript envia o arquivo para a API Gateway (localhost:5000)
 4. O Gateway coordena a análise com todos os microserviços

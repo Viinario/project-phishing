@@ -74,7 +74,7 @@ services:
     networks:
       - phishing-net
     environment:
-      - VIRTUAL_HOST=projeto-sd-phishing-detector.localhost
+      - VIRTUAL_HOST=phishing-detector.localhost
       - VIRTUAL_PORT=80
     expose:
       - "80"

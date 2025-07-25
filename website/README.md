@@ -13,7 +13,7 @@ docker-compose up --build
 
 ### Acessar os serviços
 
-- **Website**: http://localhost:8080
+- **Website**: http://phishing-detector.localhost
 - **API Gateway**: http://localhost:5000
 - **Email Parser**: http://localhost:5001
 - **Phishing Detector**: http://localhost:5002
