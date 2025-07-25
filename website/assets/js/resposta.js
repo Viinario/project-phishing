@@ -138,7 +138,7 @@ function showError(errorMessage) {
  * Volta para a página inicial
  */
 function goBackToHome() {
-  window.location.href = "index.html";
+  window.location.href = "/";
 }
 
 /**
@@ -147,7 +147,7 @@ function goBackToHome() {
 function analyzeAnother() {
   // Limpar qualquer dado restante no sessionStorage
   sessionStorage.removeItem("fileToAnalyze");
-  window.location.href = "index.html";
+  window.location.href = "/";
 }
 
 // ==========================================
@@ -211,6 +211,6 @@ document.addEventListener("DOMContentLoaded", function () {
   } else {
     // Se não há dados, redirecionar para index
     console.log("⚠️ Nenhum arquivo para análise encontrado, redirecionando...");
-    window.location.href = "index.html";
+    window.location.href = "/";
   }
 });

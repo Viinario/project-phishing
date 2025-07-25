@@ -14,6 +14,8 @@ docker-compose up --build
 ### Acessar os serviços
 
 - **Website**: http://phishing-detector.localhost
+  - **Página inicial**: http://phishing-detector.localhost/
+  - **Página de resultados**: http://phishing-detector.localhost/resposta
 - **API Gateway**: http://localhost:5000
 - **Email Parser**: http://localhost:5001
 - **Phishing Detector**: http://localhost:5002
@@ -29,6 +31,13 @@ docker-compose down
 ## Estrutura
 
 O website utiliza nginx como servidor web para servir os arquivos estáticos HTML, CSS e JavaScript. Está configurado para se comunicar com o backend através da rede Docker interna `phishing-net`.
+
+### URL Routing
+
+O nginx está configurado com rotas personalizadas:
+- `/` → serve `index.html` 
+- `/resposta` → serve `resposta.html`
+- Arquivos estáticos (CSS, JS, imagens) são servidos diretamente
 
 ## Desenvolvimento
 
