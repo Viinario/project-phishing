@@ -113,7 +113,7 @@ async function processFileForAnalysis(file) {
         console.log("💾 Arquivo preparado para análise");
 
         // Redirecionar para página de resultado
-        window.location.href = "resposta.html";
+        window.location.href = "/resposta";
         resolve();
       } catch (error) {
         reject(error);

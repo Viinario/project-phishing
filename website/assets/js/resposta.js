@@ -18,8 +18,13 @@
  */
 async function analyzeFile(formData) {
   try {
+    // URL do backend - ajustável para ambiente Docker
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? "http://localhost:5000/analyze-eml"  // Desenvolvimento local
+      : "http://localhost:5000/analyze-eml"; // Docker (pode ser ajustado conforme necessário)
+    
     // Fazer requisição para API de análise
-    const response = await fetch("http://localhost:5000/analyze-eml", {
+    const response = await fetch(apiUrl, {
       method: "POST",
       body: formData,
     });
@@ -133,7 +138,7 @@ function showError(errorMessage) {
  * Volta para a página inicial
  */
 function goBackToHome() {
-  window.location.href = "index.html";
+  window.location.href = "/";
 }
 
 /**
@@ -142,7 +147,7 @@ function goBackToHome() {
 function analyzeAnother() {
   // Limpar qualquer dado restante no sessionStorage
   sessionStorage.removeItem("fileToAnalyze");
-  window.location.href = "index.html";
+  window.location.href = "/";
 }
 
 // ==========================================
@@ -206,6 +211,6 @@ document.addEventListener("DOMContentLoaded", function () {
   } else {
     // Se não há dados, redirecionar para index
     console.log("⚠️ Nenhum arquivo para análise encontrado, redirecionando...");
-    window.location.href = "index.html";
+    window.location.href = "/";
   }
 });

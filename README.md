@@ -1,50 +1,81 @@
-# Phishing Detector Project
+# Phishing Detector - Docker Setup Completo
 
-This project is designed to detect phishing attempts through various services that analyze emails, links, and provide verdicts based on the analysis. The architecture is microservices-based, allowing for scalability and maintainability.
+## 📁 Estrutura do Projeto
 
-## Project Structure
+Agora todos os serviços estão dockerizados e podem ser executados com um único comando:
 
-The project consists of the following components:
+- **Website** (Frontend): HTML/CSS/JavaScript servido via nginx
+- **Gateway** (API Principal): Coordena todos os outros serviços  
+- **Email Parser**: Processa arquivos .eml
+- **Phishing Detector**: Analisa conteúdo de phishing
+- **Link Analyzer**: Analisa links suspeitos
+- **Verdict Service**: Gera veredito final
 
-- **email-parser**: A service that parses emails and extracts relevant information.
-- **phishing-detector**: A service that analyzes data to detect phishing attempts.
-- **link-analyzer**: A service that analyzes URLs to determine their safety.
-- **verdict-service**: A service that provides final verdicts based on analyses performed by other services.
-- **gateway** (optional): A service that routes requests to the appropriate services.
+## 🚀 Como Usar
 
-## Setup Instructions
+### 1. Subir todos os serviços
 
-1. **Clone the repository**:
-   ```
-   git clone <repository-url>
-   cd phishing-detector-project
-   ```
+```bash
+cd backend
+docker-compose up --build
+```
 
-2. **Build and run the services**:
-   You can use Docker Compose to build and run the services defined in the `docker-compose.yml` file. Run the following command:
-   ```
-   docker-compose up --build
-   ```
+### 2. Acessar os serviços
 
-3. **Access the services**:
-   Each service will be accessible through the ports defined in the `docker-compose.yml` file. Refer to the file for specific port mappings.
+- 🌐 **Website**: http://phishing-detector.localhost
+- 🔗 **API Gateway**: http://localhost:5000
+- 📧 **Email Parser**: http://localhost:5001
+- 🛡️ **Phishing Detector**: http://localhost:5002
+- 🔍 **Link Analyzer**: http://localhost:5003
+- ⚖️ **Verdict Service**: http://localhost:5004
 
-## Usage
+### 3. Parar os serviços
 
-- The **email-parser** service can be used to parse incoming emails.
-- The **phishing-detector** service analyzes data for potential phishing attempts.
-- The **link-analyzer** service checks URLs for safety.
-- The **verdict-service** aggregates results from the other services and provides a final verdict.
-- The **gateway** service (if used) routes requests to the appropriate service based on the request type.
+```bash
+docker-compose down
+```
 
-## Dependencies
+### 4. Rebuild apenas um serviço específico
 
-Each service has its own `requirements.txt` file that lists the necessary Python packages. Make sure to install these dependencies for each service.
+```bash
+# Exemplo: rebuild só o website
+docker-compose build website
 
-## Contributing
+# Ou rebuild e restart um serviço específico
+docker-compose up --build website
+```
 
-Contributions are welcome! Please submit a pull request or open an issue for any enhancements or bug fixes.
+## 🔧 Configurações
 
-## License
+### Website
+- **Servidor**: nginx alpine
+- **Porta**: 8080
+- **Arquivos**: Servidos estaticamente
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+### Backend Services
+- **Linguagem**: Python/Flask
+- **Rede**: phishing-net (bridge)
+- **Volumes**: Hot reload para desenvolvimento
+
+## 🌐 Como Funciona
+
+1. O usuário acessa o website em http://phishing-detector.localhost
+2. Faz upload de um arquivo .eml através da interface
+3. O JavaScript envia o arquivo para a API Gateway (localhost:5000)
+4. O Gateway coordena a análise com todos os microserviços
+5. O resultado é exibido na página de resposta
+
+## 🔄 Desenvolvimento
+
+Para desenvolver o website, você pode:
+- Usar o Docker (recomendado para teste completo)
+- Ou abrir diretamente no navegador para desenvolvimento de frontend
+
+O JavaScript detecta automaticamente o ambiente e ajusta as URLs da API.
+
+## 📝 Notas Importantes
+
+- Certifique-se de ter o Docker e Docker Compose instalados
+- A primeira execução pode demorar mais devido ao download das imagens
+- Os logs de todos os serviços aparecerão no terminal
+- Use Ctrl+C para parar todos os serviços
