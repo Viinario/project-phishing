@@ -31,8 +31,6 @@ O sistema é composto por 5 microsserviços:
    GEMINI_API_KEY=sua_chave_real_aqui
    ```
 
-   ⚠️ **SEGURANÇA**: O arquivo `.env` está no `.gitignore` e nunca será commitado. Cada desenvolvedor deve configurar sua própria chave. Veja [SECURITY.md](SECURITY.md) para mais detalhes.
-
 2. **Execute os microsserviços:**
    ```bash
    # No diretório backend/
