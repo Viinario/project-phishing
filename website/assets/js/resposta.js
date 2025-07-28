@@ -19,10 +19,12 @@
 async function analyzeFile(formData) {
   try {
     // URL do backend - ajustável para ambiente Docker
-    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-      ? "http://localhost:5000/analyze-eml"  // Desenvolvimento local
-      : "http://localhost:5000/analyze-eml"; // Docker (pode ser ajustado conforme necessário)
-    
+    const apiUrl =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? "http://localhost:5000/analyze-eml" // Desenvolvimento local
+        : "http://localhost:5000/analyze-eml"; // Docker (pode ser ajustado conforme necessário)
+
     // Fazer requisição para API de análise
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -59,7 +61,7 @@ function showResult(data) {
   // Esconder indicador de carregamento
   loading.style.display = "none";
 
-  const verdict = data.verdict;
+  const verdict = data.analysis_results.final_verdict;
 
   // Criar HTML com resultado formatado
   result.innerHTML = `
@@ -84,6 +86,21 @@ function showResult(data) {
                     ? `<p><strong>Confiança:</strong> ${verdict.confidence}</p>`
                     : ""
                 }
+                ${
+                  verdict.risk_factors && verdict.risk_factors.length > 0
+                    ? `<p><strong>Fatores de Risco:</strong> ${verdict.risk_factors.join(
+                        ", "
+                      )}</p>`
+                    : ""
+                }
+                ${
+                  verdict.confidence_factors &&
+                  verdict.confidence_factors.length > 0
+                    ? `<p><strong>Fatores de Confiança:</strong> ${verdict.confidence_factors.join(
+                        ", "
+                      )}</p>`
+                    : ""
+                }
             </div>
             
             <hr style="margin: 15px 0; border: 1px solid #ddd;">
@@ -91,7 +108,9 @@ function showResult(data) {
             <!-- Detalhes do e-mail analisado -->
             <div class="email-details">
                 <h4>📧 Detalhes do E-mail:</h4>
-                <p><strong>Remetente:</strong> ${data.email_data.sender}</p>
+                <p><strong>Remetente:</strong> ${
+                  data.email_data.from_address
+                }</p>
                 <p><strong>Assunto:</strong> ${data.email_data.subject}</p>
                 <p><strong>Links encontrados:</strong> ${
                   data.email_data.links_count
